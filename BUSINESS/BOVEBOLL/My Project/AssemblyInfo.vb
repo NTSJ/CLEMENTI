@@ -11,7 +11,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyProduct("Business Experience")>
 <Assembly: AssemblyCopyright("NTS Informatica Srl. Tutti i diritti riservati.")>
 <Assembly: AssemblyTrademark("Business Experience")>
-<Assembly: ComVisible(False)> 
+<Assembly: ComVisible(False)>
 ' Version information for an assembly consists of the following four values:
 '
 '      Major Version
@@ -22,5 +22,5 @@ Imports System.Runtime.InteropServices
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
-<Assembly: AssemblyVersion("24.0.1.0")> 
+<Assembly: AssemblyVersion("24.0.0.1")>
 <Assembly: AssemblyFileVersion("24.0.0.1")> 
