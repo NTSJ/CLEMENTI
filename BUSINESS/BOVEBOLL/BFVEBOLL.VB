@@ -49,6 +49,22 @@ Public Class CLFVEBOLL
     End Property
 
 
+    Private _bHHXmlEstratto As Boolean
+    ''' <summary>
+    ''' Viene attivato in FROORGSOR.GestisciEventiEntity se all'apertura del documento
+    ''' viene rilevato il messaggio standard "Il documento è collegato alla fattura elettronica...."
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property bHHXmlEstratto() As Boolean
+        Get
+            Return _bHHXmlEstratto
+        End Get
+        Set(ByVal value As Boolean)
+            _bHHXmlEstratto = value
+        End Set
+    End Property
+
+
     Public Overrides Function Init(ByRef App As CLE__APP, ByRef oScriptEngine As INT__SCRIPT, ByRef oCleLbmenu As Object, strTabella As String, bFiller1 As Boolean, strFiller1 As String, strFiller2 As String) As Boolean
         Dim bResult As Boolean = MyBase.Init(App, oScriptEngine, oCleLbmenu, strTabella, bFiller1, strFiller1, strFiller2)
 
@@ -79,13 +95,40 @@ Public Class CLFVEBOLL
 
         Try
             If bHHGestioneRAEE And strState <> "D" And IsDocumentoEmesso(dttET.Rows(0)!et_tipork.ToString, False) Then
-                HHRAEE_GestioneCodiceEcocontributoRaee()
+                If HHRAEE_TestPreElabora() Then
+                    HHRAEE_GestioneCodiceEcocontributoRaee()
+                End If
             End If
         Catch ex As Exception
             CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
         End Try
         Return MyBase.SalvaDocumento(strState)
 
+    End Function
+
+    ''' <summary>
+    ''' Controlli pre avvio elaborazione RAEE
+    ''' </summary>
+    ''' <returns></returns>
+    Public Overridable Function HHRAEE_TestPreElabora() As Boolean
+
+        Dim bFatturato As Boolean = False
+        Try
+            If Not bDocEmesso Then Return False
+
+            ' se il documento è collegato alla fattura elettronica non devo fare l'elaborazione RAEE
+            If bHHXmlEstratto Then Return False
+
+            ' se il ddt è fatturato non devo fare l'elaborazione RAEE
+            If dttET.Rows(0)!et_tipork.ToString = "B" And dttET.Rows(0)!et_flfatt.ToString = "S" Then
+                Return False
+            End If
+
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
     End Function
 
     ''' <summary>

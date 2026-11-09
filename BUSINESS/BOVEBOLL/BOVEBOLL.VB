@@ -17,6 +17,15 @@ Public Class FROVEBOLL
         End Set
     End Property
 
+    Public Overrides Sub GestisciEventiEntity(sender As Object, ByRef e As NTSEventArgs)
+
+        If e.Message.ToLower.Contains("Il documento è collegato alla fattura elettronica".ToLower) Then
+            ' se la fattura è presente nelle fatture elettroniche non faccio partire la gestione del RAEE
+            oClfBoll.bHHXmlEstratto = True
+        End If
+
+        MyBase.GestisciEventiEntity(sender, e)
+    End Sub
 
 End Class
 

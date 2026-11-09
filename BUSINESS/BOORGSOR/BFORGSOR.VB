@@ -79,14 +79,49 @@ Public Class CLFORGSOR
     Public Overrides Function SalvaOrdine(strState As String) As Boolean
 
         Try
-            If bHHGestioneRAEE And strState <> "D" And dttET.Rows(0)!et_tipork.ToString = "R" Then HHRAEE_GestioneCodiceEcocontributoRaee()
+            If bHHGestioneRAEE And strState <> "D" And dttET.Rows(0)!et_tipork.ToString = "R" Then
+                If HHRAEE_TestPreElabora() Then
+                    HHRAEE_GestioneCodiceEcocontributoRaee()
+                End If
+            End If
         Catch ex As Exception
             CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
         End Try
         Return MyBase.SalvaOrdine(strState)
 
+
     End Function
 
+    ''' <summary>
+    ''' Controlli pre avvio elaborazione RAEE
+    ''' </summary>
+    ''' <returns></returns>
+    Public Overridable Function HHRAEE_TestPreElabora() As Boolean
+
+        ' forse potrei affinare il controllo escludendo dal calcolo RAEE le righe evase in modo che
+        ' l'aggiunta di una nuova riga soggett a CONAI venga comunque gestita per i casi sono veramente
+        ' pochi quindi per adesso lascio così.
+        Dim bRigheEvase As Boolean = False
+        Try
+            ' Controllo che non ci siano righe evase.
+            ' controllo le quantità evase di riga, eventuali flag di evasione totale di riga e il flag evasione totale di testata
+            If dttET.Select("et_flevas='S' ").Length > 0 Then
+                bRigheEvase = True
+            ElseIf dttEC.Select("ec_flevas='S' ").Length > 0 Then
+                bRigheEvase = True
+            ElseIf dttEC.Select("ec_quaeva > 0 ").Length > 0 Then
+                bRigheEvase = True
+            End If
+
+            If bRigheEvase Then
+                Return False
+            End If
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Function
 
     ''' <summary>
     ''' controlla la presenza di articoli con la gestione raee attiva a provvede ad aggiungere l'ecocontributo nel corpo del documento
