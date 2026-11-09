@@ -344,7 +344,7 @@ Public Class FRMHHTASS
         Me.Controls.Add(Me.barDockControlTop)
         Me.HelpButton = True
         Me.Name = "FRMHHTASS"
-        Me.Text = "CODICI IVA"
+        Me.Text = "TIPI ASSICURAZIONE"
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.pnTass, System.ComponentModel.ISupportInitialize).EndInit()
