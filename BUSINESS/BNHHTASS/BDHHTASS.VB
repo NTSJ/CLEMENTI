@@ -5,11 +5,14 @@ Imports NTSInformatica.CLN__STD
 Public Class CLDHHTASS
     Inherits CLD__BASE
 
-    Public Overridable Function LeggiTabella(ByVal strDitta As String, ByRef dsOut As DataSet) As Boolean
+    Public Overridable Function LeggiTabella(ByVal strDitta As String, ByRef dsOut As DataSet, Optional ByVal nCodTipoAssicur As Integer = 0) As Boolean
         Dim strSQL As String = ""
         Try
 
             strSQL = $"select HH_TIPIASSICURAZIONE.* from HH_TIPIASSICURAZIONE where HH_TIPIASSICURAZIONE.codditt = {CStrSQL(strDitta)}"
+            If nCodTipoAssicur <> 0 Then
+                strSQL += $"{vbCrLf}and HH_TIPIASSICURAZIONE.tb_codtipoassicur = {CDblSQL(nCodTipoAssicur)}"
+            End If
             'Chiedo i dati al database
             dsOut = OpenRecordset(strSQL, CLE__APP.DBTIPO.DBAZI, "HH_TIPIASSICURAZIONE")
 
@@ -64,7 +67,6 @@ Public Class CLDHHTASS
             dttTmp.Dispose()
         End Try
     End Function
-
 
 
 End Class

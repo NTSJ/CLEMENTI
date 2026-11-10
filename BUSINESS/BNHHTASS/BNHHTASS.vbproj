@@ -114,6 +114,8 @@
       <DependentUpon>BNHHTASS.VB</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="DTO\HHDTO_Assicurazione.VB" />
+    <Compile Include="Enum\TipiAssicurazione.VB" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

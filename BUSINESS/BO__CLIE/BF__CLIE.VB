@@ -77,10 +77,11 @@ Public Class CLF__CLIE
         Dim HHbHasChangesMem As Boolean = bHasChanges
         Try
             If Not bResult Then Return False
-
             HHAddColumnsPers()
-            HHDecodDatiPersInApertura()
-            HHASS_MemorizzaValoriIniziali()
+            If dsClie.Tables("ANAGRA").Rows.Count > 0 Then
+                HHDecodDatiPersInApertura()
+                HHASS_MemorizzaValoriIniziali()
+            End If
 
 
             bHasChanges = HHbHasChangesMem

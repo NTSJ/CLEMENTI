@@ -32,6 +32,7 @@ Public Class FRMHHTASS
     Public WithEvents tb_flscadenza As NTSGridColumn
     Public WithEvents tb_duratamesi As NTSGridColumn
     Friend WithEvents tb_obsoleto As NTSGridColumn
+    Friend WithEvents tb_tipo As NTSGridColumn
     Public WithEvents grvTass As NTSInformatica.NTSGridView
 
 #End Region
@@ -89,6 +90,7 @@ Public Class FRMHHTASS
         Me.tb_flscadenza = New NTSInformatica.NTSGridColumn()
         Me.tb_duratamesi = New NTSInformatica.NTSGridColumn()
         Me.tb_obsoleto = New NTSInformatica.NTSGridColumn()
+        Me.tb_tipo = New NTSInformatica.NTSGridColumn()
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pnTass, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -247,7 +249,7 @@ Public Class FRMHHTASS
         'grvTass
         '
         Me.grvTass.ActiveFilterEnabled = False
-        Me.grvTass.Columns.AddRange(New DevExpress.XtraGrid.Columns.GridColumn() {Me.tb_codtipoassicur, Me.tb_destipoassicur, Me.tb_flscadenza, Me.tb_duratamesi, Me.tb_obsoleto})
+        Me.grvTass.Columns.AddRange(New DevExpress.XtraGrid.Columns.GridColumn() {Me.tb_codtipoassicur, Me.tb_destipoassicur, Me.tb_flscadenza, Me.tb_duratamesi, Me.tb_obsoleto, Me.tb_tipo})
         Me.grvTass.CustomizationFormBounds = New System.Drawing.Rectangle(680, 326, 208, 170)
         Me.grvTass.Enabled = True
         Me.grvTass.GridControl = Me.grTass
@@ -304,7 +306,7 @@ Public Class FRMHHTASS
         Me.tb_flscadenza.OptionsColumn.AllowSort = DevExpress.Utils.DefaultBoolean.[False]
         Me.tb_flscadenza.OptionsFilter.AllowFilter = False
         Me.tb_flscadenza.Visible = True
-        Me.tb_flscadenza.VisibleIndex = 2
+        Me.tb_flscadenza.VisibleIndex = 3
         '
         'tb_duratamesi
         '
@@ -318,7 +320,7 @@ Public Class FRMHHTASS
         Me.tb_duratamesi.OptionsColumn.AllowSort = DevExpress.Utils.DefaultBoolean.[False]
         Me.tb_duratamesi.OptionsFilter.AllowFilter = False
         Me.tb_duratamesi.Visible = True
-        Me.tb_duratamesi.VisibleIndex = 3
+        Me.tb_duratamesi.VisibleIndex = 4
         '
         'tb_obsoleto
         '
@@ -332,7 +334,21 @@ Public Class FRMHHTASS
         Me.tb_obsoleto.OptionsColumn.AllowSort = DevExpress.Utils.DefaultBoolean.[False]
         Me.tb_obsoleto.OptionsFilter.AllowFilter = False
         Me.tb_obsoleto.Visible = True
-        Me.tb_obsoleto.VisibleIndex = 4
+        Me.tb_obsoleto.VisibleIndex = 5
+        '
+        'tb_tipo
+        '
+        Me.tb_tipo.AppearanceCell.Options.UseBackColor = True
+        Me.tb_tipo.AppearanceCell.Options.UseTextOptions = True
+        Me.tb_tipo.Caption = "Tipo"
+        Me.tb_tipo.Enabled = True
+        Me.tb_tipo.FieldName = "tb_tipo"
+        Me.tb_tipo.FilterMode = DevExpress.XtraGrid.ColumnFilterMode.DisplayText
+        Me.tb_tipo.Name = "tb_tipo"
+        Me.tb_tipo.OptionsColumn.AllowSort = DevExpress.Utils.DefaultBoolean.[False]
+        Me.tb_tipo.OptionsFilter.AllowFilter = False
+        Me.tb_tipo.Visible = True
+        Me.tb_tipo.VisibleIndex = 2
         '
         'FRMHHTASS
         '
@@ -458,7 +474,7 @@ Public Class FRMHHTASS
 
     Public Overridable Sub InitControls()
         InitControlsBeginEndInit(Me, False)
-
+        Dim dttTipoAss As DataTable = Nothing
         Try
             'Carico le immagini della Toolbar
             Try
@@ -475,11 +491,22 @@ Public Class FRMHHTASS
             End Try
             tlbMain.NTSSetToolTip()
 
+            dttTipoAss = New DataTable
+            dttTipoAss.Columns.Add(New DataColumn("cod", GetType(Integer)))
+            dttTipoAss.Columns.Add(New DataColumn("val", GetType(String)))
+
+            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Non_impostata, TipoAssicurazione.Non_impostata})
+            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Assicurazione, TipoAssicurazione.Assicurazione})
+            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Fido, TipoAssicurazione.Fido})
+            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Rating, TipoAssicurazione.Rating})
+            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Annullata, TipoAssicurazione.Annullata})
+
 
             grvTass.NTSSetParam(oMenu, oApp.Tr(Me, 128230023372468841, "Griglia Codici IVA"))
 
             tb_codtipoassicur.NTSSetParamNUM(oMenu, "Codice", "#0", 0)
             tb_destipoassicur.NTSSetParamSTR(oMenu, "Descrizione", 500, True)
+            tb_tipo.NTSSetParamCMB(oMenu, "Tipo", dttTipoAss, "val", "cod")
             tb_flscadenza.NTSSetParamCHK(oMenu, "Gestione scadenza", "S", "N")
             tb_duratamesi.NTSSetParamNUM(oMenu, "Durata (mesi)", "#0", 0)
             tb_obsoleto.NTSSetParamCHK(oMenu, "Obsoleto", "S", "N")

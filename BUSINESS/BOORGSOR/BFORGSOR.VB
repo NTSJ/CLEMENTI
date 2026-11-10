@@ -8,6 +8,10 @@ Imports System.Linq
 Public Class CLFORGSOR
     Inherits CLEORGSOR
 
+#Region "proprietà e variabili"
+
+
+
     Public _oClhGsor As CLHORGSOR
     Public Property oClhGsor() As CLHORGSOR
         Get
@@ -50,6 +54,34 @@ Public Class CLFORGSOR
     End Property
 
 
+    ''' <summary>
+    ''' Assicurazione corrente del cliente
+    ''' </summary>
+    Public oHHAssicurazione As HHDTO_Assicurazione
+
+    Private _oHHCleTass As CLEHHTASS
+    ''' <summary>
+    ''' Procedura gestione tipi assicurazioni
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property oHHCleTass() As CLEHHTASS
+        Get
+            If _oHHCleTass Is Nothing Then
+                _oHHCleTass = NTSIstanziaEInitDll(Of CLEHHTASS)("HH_TIPIASSICURAZIONE")
+            End If
+            Return _oHHCleTass
+        End Get
+        Set(ByVal value As CLEHHTASS)
+            _oHHCleTass = value
+        End Set
+    End Property
+
+
+#End Region
+
+#Region "routine standard"
+
+
     Public Overrides Function Init(ByRef App As CLE__APP, ByRef oScriptEngine As INT__SCRIPT, ByRef oCleLbmenu As Object, strTabella As String, bFiller1 As Boolean, strFiller1 As String, strFiller2 As String) As Boolean
         Dim bResult As Boolean = MyBase.Init(App, oScriptEngine, oCleLbmenu, strTabella, bFiller1, strFiller1, strFiller2)
 
@@ -64,18 +96,6 @@ Public Class CLFORGSOR
         Return bResult
     End Function
 
-    ''' <summary>
-    ''' Lettura delle opzioni di registro personalizzate
-    ''' </summary>
-    Public Overridable Sub HHLeggiRegistro()
-        Try
-            ' attiva\disattiva la gestione del RAEE
-            bHHGestioneRAEE = CType(oClhGsor.GetSettingBusDitt(strDittaCorrente, "BSORGSOR", "OPZIONI", ".", "HHAttivaGestioneRAEE", "", ".", "0"), Boolean)
-        Catch ex As Exception
-            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
-        End Try
-    End Sub
-
     Public Overrides Function SalvaOrdine(strState As String) As Boolean
 
         Try
@@ -89,9 +109,78 @@ Public Class CLFORGSOR
         End Try
         Return MyBase.SalvaOrdine(strState)
 
-
     End Function
 
+    Public Overrides Function CheckFidoInsol(bDopo As Boolean, lConto As Integer, ByRef dttEt As DataTable, ByRef bBloccaCli As Boolean, ByRef dtoParamFido As DTOMGDOCU_ParamFido) As Boolean
+        Dim bResult As Boolean = MyBase.CheckFidoInsol(bDopo, lConto, dttEt, bBloccaCli, dtoParamFido)
+
+        Try
+            If Not bResult Then Return False
+
+            HHASS_CheckAssicurazioni(lConto, dttEt)
+
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+
+        Return bResult
+    End Function
+
+
+
+#End Region
+
+
+#Region "Routine personalizzate"
+
+    Public Overridable Function HHASS_CheckAssicurazioni(lConto As Integer, dttEt As DataTable) As Boolean
+        Try
+
+            ' TODO: leggo l'anagrafica del tipo assicurazione
+            If Not oHHCleTass.GetDTOAssicurazione(lConto, oHHAssicurazione) Then
+                ThrowRemoteEvent(New NTSEventArgs("", "Errore leggendo i dati dell'assicurazione"))
+                Return False
+            End If
+
+            ' controllo se l'assicurazione è in corso di validità o meno; controllo
+            ' anche se in procinto di scadenza
+            If oHHAssicurazione.bGestita_a_scadenza Then
+
+                If NTSCDate(dttEt.Rows(0)!et_datdoc) > oHHAssicurazione.dDataFineVal Then
+                    ThrowRemoteEvent(New NTSEventArgs("", "La data di scadenza dell'assicurazione è antecedente alla data del documento"))
+                End If
+
+            End If
+
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Function
+
+
+    ''' <summary>
+    ''' Lettura delle opzioni di registro personalizzate
+    ''' </summary>
+    Public Overridable Sub HHLeggiRegistro()
+        Try
+            ' attiva\disattiva la gestione del RAEE
+            bHHGestioneRAEE = CType(oClhGsor.GetSettingBusDitt(strDittaCorrente, "BSORGSOR", "OPZIONI", ".", "HHAttivaGestioneRAEE", "", ".", "0"), Boolean)
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Sub
+
+
+#Region "Gestione assicurazioni"
+
+
+
+#End Region
+
+
+#Region "Gestione RAEE"
     ''' <summary>
     ''' Controlli pre avvio elaborazione RAEE
     ''' </summary>
@@ -207,4 +296,8 @@ Public Class CLFORGSOR
             dttCodartRaee.Dispose() : dttCodartRaee = Nothing
         End Try
     End Function
+#End Region
+
+#End Region
+
 End Class

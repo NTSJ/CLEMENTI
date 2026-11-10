@@ -17,6 +17,8 @@ Public Class CLEHHTASS
         oCldTass = CType(MyBase.ocldBase, CLDHHTASS)
         oCldTass.Init(oApp)
 
+
+
         LeggiRegistro()
         Return True
     End Function
@@ -224,5 +226,53 @@ Public Class CLEHHTASS
     End Function
 
 
+    ''' <summary>
+    ''' Restiutisce i dati, sotto forma di DTO, dell'assicurazione abbinata nell'anagrafica del cliente indicato
+    ''' </summary>
+    ''' <param name="nConto"></param>
+    ''' <param name="oOut">oggetto di tipo HHDTO_Assicurazione</param>
+    ''' <returns></returns>
+    Public Overridable Function GetDTOAssicurazione(nConto As Integer, ByRef oOut As HHDTO_Assicurazione) As Boolean
 
+        Dim dsAssicur As New DataSet
+        Dim dttConto As New DataTable
+        Try
+            oOut = New HHDTO_Assicurazione
+
+            oCldTass.ValCodiceDb(nConto.ToString, strDittaCorrente, "ANAGRAC", "N", "", dttConto)
+
+            If dttConto.Rows.Count = 0 Then
+                ThrowRemoteEvent(New NTSEventArgs("", "Errore leggendo l'anagrafica del cliente"))
+                Return False
+            End If
+
+            If Not oCldTass.LeggiTabella(strDittaCorrente, dsAssicur, NTSCInt(dttConto.Rows(0)!an_hhcodtipoassicur)) Then
+                ThrowRemoteEvent(New NTSEventArgs("", "Errore aprendo l'anagrafica dell'assicurazione"))
+                Return False
+            End If
+
+            With dsAssicur.Tables("HH_TIPIASSICURAZIONE").Rows(0)
+                oOut.nConto = nConto
+                oOut.nCodice = NTSCInt(!tb_codtipoassicur)
+                oOut.strDescrizione = !tb_destipoassicur.ToString
+                oOut.nTipo = NTSCInt(!tb_tipo)
+                oOut.bGestita_a_scadenza = CType(IIf(!tb_flscadenza.ToString = "S", 1, 0), Boolean)
+                oOut.nMesiValidita = NTSCInt(!tb_duratamesi)
+                oOut.dDataInizioVal = NTSCDate(dttConto.Rows(0)!an_hhdatainizioassicur)
+                ' la data fine viene calcolata in automatico
+            End With
+
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, "")
+        Finally
+            If dsAssicur.Tables.Count > 0 Then
+                Dim dtt As DataTable = dsAssicur.Tables(0)
+                dsAssicur.Tables.Remove(dtt)
+                dtt.Dispose() : dtt = Nothing
+            End If
+            dsAssicur.Dispose() : dsAssicur = Nothing
+        End Try
+    End Function
 End Class
