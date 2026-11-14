@@ -10,8 +10,6 @@ Public Class CLFORGSOR
 
 #Region "proprietà e variabili"
 
-
-
     Public _oClhGsor As CLHORGSOR
     Public Property oClhGsor() As CLHORGSOR
         Get
@@ -77,6 +75,20 @@ Public Class CLFORGSOR
     End Property
 
 
+    Private _nHHGgAvvisoScadAssicurazione As Integer
+    ''' <summary>
+    ''' Indica il numero di giorni sotto i quali l'operatore viene avvisato dell'imminente scadenza dell'assicurazione
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property nHHGgAvvisoScadAssicurazione() As Integer
+        Get
+            Return _nHHGgAvvisoScadAssicurazione
+        End Get
+        Set(ByVal value As Integer)
+            _nHHGgAvvisoScadAssicurazione = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "routine standard"
@@ -117,7 +129,9 @@ Public Class CLFORGSOR
         Try
             If Not bResult Then Return False
 
-            HHASS_CheckAssicurazioni(lConto, dttEt)
+            If Not HHASS_CheckAssicurazioni(lConto, dttEt) Then
+                Return False
+            End If
 
         Catch ex As Exception
             CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
@@ -133,33 +147,6 @@ Public Class CLFORGSOR
 
 #Region "Routine personalizzate"
 
-    Public Overridable Function HHASS_CheckAssicurazioni(lConto As Integer, dttEt As DataTable) As Boolean
-        Try
-
-            ' TODO: leggo l'anagrafica del tipo assicurazione
-            If Not oHHCleTass.GetDTOAssicurazione(lConto, oHHAssicurazione) Then
-                ThrowRemoteEvent(New NTSEventArgs("", "Errore leggendo i dati dell'assicurazione"))
-                Return False
-            End If
-
-            ' controllo se l'assicurazione è in corso di validità o meno; controllo
-            ' anche se in procinto di scadenza
-            If oHHAssicurazione.bGestita_a_scadenza Then
-
-                If NTSCDate(dttEt.Rows(0)!et_datdoc) > oHHAssicurazione.dDataFineVal Then
-                    ThrowRemoteEvent(New NTSEventArgs("", "La data di scadenza dell'assicurazione è antecedente alla data del documento"))
-                End If
-
-            End If
-
-
-            Return True
-        Catch ex As Exception
-            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
-        End Try
-    End Function
-
-
     ''' <summary>
     ''' Lettura delle opzioni di registro personalizzate
     ''' </summary>
@@ -167,15 +154,57 @@ Public Class CLFORGSOR
         Try
             ' attiva\disattiva la gestione del RAEE
             bHHGestioneRAEE = CType(oClhGsor.GetSettingBusDitt(strDittaCorrente, "BSORGSOR", "OPZIONI", ".", "HHAttivaGestioneRAEE", "", ".", "0"), Boolean)
+            nHHGgAvvisoScadAssicurazione = CType(oClhGsor.GetSettingBusDitt(strDittaCorrente, "BSORGSOR", "OPZIONI", ".", "HHnGiorniCheckScadAssicurazione", "", ".", "30"), Integer)
         Catch ex As Exception
             CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
         End Try
     End Sub
 
 
+
 #Region "Gestione assicurazioni"
 
+    ''' <summary>
+    ''' Controlli specifici per la gestione delle assicurazioni
+    ''' </summary>
+    ''' <param name="lConto"></param>
+    ''' <param name="dttEt"></param>
+    ''' <returns></returns>
+    Public Overridable Function HHASS_CheckAssicurazioni(lConto As Integer, dttEt As DataTable) As Boolean
+        Try
 
+            ' Leggo i dati dell'assicurazione del cliente; se non esiste l'assicurazione non faccio nulla   
+            If Not oHHCleTass.GetDTOAssicurazione(lConto, oHHAssicurazione) Then
+                ThrowRemoteEvent(New NTSEventArgs("", "Errore leggendo i dati dell'assicurazione"))
+                Return False
+            End If
+
+            ' controllo se l'assicurazione è annullata
+            If oHHAssicurazione.oTipo = HHTipoAssicurazione.Annullata Then
+                ThrowRemoteEvent(New NTSEventArgs("", $"Attenzione! l'assicurazione è {oHHAssicurazione.strDescrizione}"))
+                Return False
+            End If
+
+            ' se l'assicurazione gestita a scadenza controllo che la data del documento non sia successiva alla data di scadenza dell'assicurazione
+            ' e anche se è in procinto di scadenza. in entrambi i casi avviso l'utente
+            If oHHAssicurazione.oTipo = HHTipoAssicurazione.Assicurazione And oHHAssicurazione.bGestita_a_scadenza Then
+                If NTSCDate(dttEt.Rows(0)!et_datdoc) > oHHAssicurazione.dDataFineVal Then
+                    ThrowRemoteEvent(New NTSEventArgs("", "La data di scadenza dell'assicurazione è antecedente alla data del documento"))
+                    Return False
+                End If
+
+                ' controllo se l'assicurazione è un scadenza, se non impostato diversamente l'utente viene avvisato se l'assicurazione
+                ' scade tra 30 gg o meno dal giorno odierno
+                If DateDiff(DateInterval.Day, Now.Date, oHHAssicurazione.dDataFineVal) <= nHHGgAvvisoScadAssicurazione Then
+                    ThrowRemoteEvent(New NTSEventArgs("", $"Attenzione! l'assicurazione {CStrSQL(oHHAssicurazione.strDescrizione)} è in scadenza ({NTSCDate(oHHAssicurazione.dDataFineVal).ToString})"))
+                End If
+            End If
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Function
 
 #End Region
 

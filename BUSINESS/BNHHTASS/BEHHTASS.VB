@@ -255,7 +255,7 @@ Public Class CLEHHTASS
                 oOut.nConto = nConto
                 oOut.nCodice = NTSCInt(!tb_codtipoassicur)
                 oOut.strDescrizione = !tb_destipoassicur.ToString
-                oOut.nTipo = NTSCInt(!tb_tipo)
+                oOut.oTipo = CType(NTSCInt(!tb_tipo), HHTipoAssicurazione)
                 oOut.bGestita_a_scadenza = CType(IIf(!tb_flscadenza.ToString = "S", 1, 0), Boolean)
                 oOut.nMesiValidita = NTSCInt(!tb_duratamesi)
                 oOut.dDataInizioVal = NTSCDate(dttConto.Rows(0)!an_hhdatainizioassicur)

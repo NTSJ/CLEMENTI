@@ -5,7 +5,7 @@ Imports NTSInformatica.CLN__STD
 ''' Tipo di assicurazione: in base al tipo effettuo controlli diversi da codice
 ''' </summary>
 <Serializable()>
-Public Enum TipoAssicurazione
+Public Enum HHTipoAssicurazione
 
     Non_impostata = 0
     Assicurazione = 1

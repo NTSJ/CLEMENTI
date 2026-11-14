@@ -495,11 +495,11 @@ Public Class FRMHHTASS
             dttTipoAss.Columns.Add(New DataColumn("cod", GetType(Integer)))
             dttTipoAss.Columns.Add(New DataColumn("val", GetType(String)))
 
-            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Non_impostata, TipoAssicurazione.Non_impostata})
-            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Assicurazione, TipoAssicurazione.Assicurazione})
-            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Fido, TipoAssicurazione.Fido})
-            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Rating, TipoAssicurazione.Rating})
-            dttTipoAss.Rows.Add(New Object() {TipoAssicurazione.Annullata, TipoAssicurazione.Annullata})
+            dttTipoAss.Rows.Add(New Object() {HHTipoAssicurazione.Non_impostata, HHTipoAssicurazione.Non_impostata})
+            dttTipoAss.Rows.Add(New Object() {HHTipoAssicurazione.Assicurazione, HHTipoAssicurazione.Assicurazione})
+            dttTipoAss.Rows.Add(New Object() {HHTipoAssicurazione.Fido, HHTipoAssicurazione.Fido})
+            dttTipoAss.Rows.Add(New Object() {HHTipoAssicurazione.Rating, HHTipoAssicurazione.Rating})
+            dttTipoAss.Rows.Add(New Object() {HHTipoAssicurazione.Annullata, HHTipoAssicurazione.Annullata})
 
 
             grvTass.NTSSetParam(oMenu, oApp.Tr(Me, 128230023372468841, "Griglia Codici IVA"))

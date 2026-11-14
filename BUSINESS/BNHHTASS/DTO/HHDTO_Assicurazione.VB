@@ -50,17 +50,17 @@ Public Class HHDTO_Assicurazione
         End Set
     End Property
 
-    Private _nTipo As Integer
+    Private _oTipo As HHTipoAssicurazione
     ''' <summary>
     ''' Tipo assicurazione
     ''' </summary>
     ''' <returns></returns>
-    Public Property nTipo() As Integer
+    Public Property oTipo() As HHTipoAssicurazione
         Get
-            Return _nTipo
+            Return _oTipo
         End Get
-        Set(ByVal value As Integer)
-            _nTipo = value
+        Set(ByVal value As HHTipoAssicurazione)
+            _oTipo = value
         End Set
     End Property
 

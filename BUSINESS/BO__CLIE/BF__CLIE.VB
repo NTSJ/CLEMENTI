@@ -237,11 +237,22 @@ Public Class CLF__CLIE
     End Sub
 
     Public Overridable Sub HHDecodDatiPersInApertura()
+
+        Dim e As DataColumnChangeEventArgs = Nothing
         Try
-            Dim e As New DataColumnChangeEventArgs(dsShared.Tables("ANAGRA").Rows(0),
+            ' descrizione 
+            e = New DataColumnChangeEventArgs(dsShared.Tables("ANAGRA").Rows(0),
                                                    dsShared.Tables("ANAGRA").Columns("an_hhcodtipoassicur"),
                                                    dsShared.Tables("ANAGRA").Rows(0)!an_hhcodtipoassicur)
             BeforeColUpdate_an_hhcodtipoassicur(Me, e)
+
+            ' nell'evento richiamato di seguito, se l'assicurazione è gestita a scadenza allora calcolo la data di scadenza
+            ' viceversa rendo non editabili i campi delle date.
+            e = Nothing
+            e = New DataColumnChangeEventArgs(dsShared.Tables("ANAGRA").Rows(0),
+                                              dsShared.Tables("ANAGRA").Columns("an_hhcodtipoassicur"),
+                                              dsShared.Tables("ANAGRA").Rows(0)!an_hhcodtipoassicur)
+            AfterColUpdate_an_hhcodtipoassicur(Me, e)
 
         Catch ex As Exception
             CLN__STD.GestErr(ex, Me, oApp.InfoError)

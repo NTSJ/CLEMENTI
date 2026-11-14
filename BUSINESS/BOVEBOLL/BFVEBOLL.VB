@@ -8,6 +8,9 @@ Imports System.Linq
 Public Class CLFVEBOLL
     Inherits CLEVEBOLL
 
+
+#Region "proprietà e variabili"
+
     Public _oClhBoll As CLHVEBOLL
     Public Property oClhBoll() As CLHVEBOLL
         Get
@@ -65,6 +68,47 @@ Public Class CLFVEBOLL
     End Property
 
 
+    ''' <summary>
+    ''' Assicurazione corrente del cliente
+    ''' </summary>
+    Public oHHAssicurazione As HHDTO_Assicurazione
+
+    Private _oHHCleTass As CLEHHTASS
+    ''' <summary>
+    ''' Procedura gestione tipi assicurazioni
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property oHHCleTass() As CLEHHTASS
+        Get
+            If _oHHCleTass Is Nothing Then
+                _oHHCleTass = NTSIstanziaEInitDll(Of CLEHHTASS)("HH_TIPIASSICURAZIONE")
+            End If
+            Return _oHHCleTass
+        End Get
+        Set(ByVal value As CLEHHTASS)
+            _oHHCleTass = value
+        End Set
+    End Property
+
+    Private _nHHGgAvvisoScadAssicurazione As Integer
+    ''' <summary>
+    ''' Indica il numero di giorni sotto i quali l'operatore viene avvisato dell'imminente scadenza dell'assicurazione
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property nHHGgAvvisoScadAssicurazione() As Integer
+        Get
+            Return _nHHGgAvvisoScadAssicurazione
+        End Get
+        Set(ByVal value As Integer)
+            _nHHGgAvvisoScadAssicurazione = value
+        End Set
+    End Property
+
+#End Region
+
+#Region "Routine standard"
+
+
     Public Overrides Function Init(ByRef App As CLE__APP, ByRef oScriptEngine As INT__SCRIPT, ByRef oCleLbmenu As Object, strTabella As String, bFiller1 As Boolean, strFiller1 As String, strFiller2 As String) As Boolean
         Dim bResult As Boolean = MyBase.Init(App, oScriptEngine, oCleLbmenu, strTabella, bFiller1, strFiller1, strFiller2)
 
@@ -79,17 +123,7 @@ Public Class CLFVEBOLL
         Return bResult
     End Function
 
-    ''' <summary>
-    ''' Lettura delle opzioni di registro personalizzate
-    ''' </summary>
-    Public Overridable Sub HHLeggiRegistro()
-        Try
-            ' attiva\disattiva la gestione del RAEE
-            bHHGestioneRAEE = CType(oClhBoll.GetSettingBusDitt(strDittaCorrente, "BSVEBOLL", "OPZIONI", ".", "HHAttivaGestioneRAEE", "", ".", "0"), Boolean)
-        Catch ex As Exception
-            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
-        End Try
-    End Sub
+
 
     Public Overrides Function SalvaDocumento(strState As String) As Boolean
 
@@ -105,6 +139,44 @@ Public Class CLFVEBOLL
         Return MyBase.SalvaDocumento(strState)
 
     End Function
+
+    Public Overrides Function CheckFidoInsol(bDopo As Boolean, lConto As Integer, ByRef dttEt As DataTable, ByRef bBloccaCli As Boolean, ByRef dtoParamFido As DTOMGDOCU_ParamFido) As Boolean
+        Dim bResult As Boolean = MyBase.CheckFidoInsol(bDopo, lConto, dttEt, bBloccaCli, dtoParamFido)
+
+        Try
+            If Not bResult Then Return False
+
+            If Not HHASS_CheckAssicurazioni(lConto, dttEt) Then
+                Return False
+            End If
+
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+
+        Return bResult
+    End Function
+
+
+#End Region
+
+#Region "Routine personalizzate"
+
+    ''' <summary>
+    ''' Lettura delle opzioni di registro personalizzate
+    ''' </summary>
+    Public Overridable Sub HHLeggiRegistro()
+        Try
+            ' attiva\disattiva la gestione del RAEE
+            bHHGestioneRAEE = CType(oClhBoll.GetSettingBusDitt(strDittaCorrente, "BSVEBOLL", "OPZIONI", ".", "HHAttivaGestioneRAEE", "", ".", "0"), Boolean)
+            nHHGgAvvisoScadAssicurazione = CType(oClhBoll.GetSettingBusDitt(strDittaCorrente, "BSVEBOLL", "OPZIONI", ".", "HHnGiorniCheckScadAssicurazione", "", ".", "30"), Integer)
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Sub
+
+
+#Region "Gestione RAEE"
 
     ''' <summary>
     ''' Controlli pre avvio elaborazione RAEE
@@ -215,4 +287,52 @@ Public Class CLFVEBOLL
             dttCodartRaee.Dispose() : dttCodartRaee = Nothing
         End Try
     End Function
+#End Region
+
+
+#Region "Gestione assicurazioni"
+    ''' <summary>
+    ''' Controlli specifici per la gestione delle assicurazioni
+    ''' </summary>
+    ''' <param name="lConto"></param>
+    ''' <param name="dttEt"></param>
+    ''' <returns></returns>
+    Public Overridable Function HHASS_CheckAssicurazioni(lConto As Integer, dttEt As DataTable) As Boolean
+        Try
+
+            ' Leggo i dati dell'assicurazione del cliente; se non esiste l'assicurazione non faccio nulla   
+            If Not oHHCleTass.GetDTOAssicurazione(lConto, oHHAssicurazione) Then
+                ThrowRemoteEvent(New NTSEventArgs("", "Errore leggendo i dati dell'assicurazione"))
+                Return False
+            End If
+
+            ' controllo se l'assicurazione è annullata
+            If oHHAssicurazione.oTipo = HHTipoAssicurazione.Annullata Then
+                ThrowRemoteEvent(New NTSEventArgs("", $"Attenzione! l'assicurazione è {oHHAssicurazione.strDescrizione}"))
+                Return False
+            End If
+
+            ' se l'assicurazione gestita a scadenza controllo che la data del documento non sia successiva alla data di scadenza dell'assicurazione
+            ' e anche se è in procinto di scadenza. in entrambi i casi avviso l'utente
+            If oHHAssicurazione.oTipo = HHTipoAssicurazione.Assicurazione And oHHAssicurazione.bGestita_a_scadenza Then
+                If NTSCDate(dttEt.Rows(0)!et_datdoc) > oHHAssicurazione.dDataFineVal Then
+                    ThrowRemoteEvent(New NTSEventArgs("", "La data di scadenza dell'assicurazione è antecedente alla data del documento"))
+                    Return False
+                End If
+
+                ' controllo se l'assicurazione è un scadenza, se non impostato diversamente l'utente viene avvisato se l'assicurazione
+                ' scade tra 30 gg o meno dal giorno odierno
+                If DateDiff(DateInterval.Day, Now.Date, oHHAssicurazione.dDataFineVal) <= nHHGgAvvisoScadAssicurazione Then
+                    ThrowRemoteEvent(New NTSEventArgs("", $"Attenzione! l'assicurazione {CStrSQL(oHHAssicurazione.strDescrizione)} è in scadenza ({NTSCDate(oHHAssicurazione.dDataFineVal).ToString})"))
+                End If
+            End If
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestError(ex, Me, "", oApp.InfoError, oApp.ErrorLogFile, True)
+        End Try
+    End Function
+#End Region
+
+#End Region
 End Class
