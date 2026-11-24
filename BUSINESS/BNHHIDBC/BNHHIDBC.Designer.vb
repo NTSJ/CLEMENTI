@@ -1,4 +1,4 @@
-Partial Class FRM__SRPT
+Partial Class FRMHHIDBC
   Inherits FRM__CHIL
 
   <System.Diagnostics.DebuggerNonUserCode()> _
