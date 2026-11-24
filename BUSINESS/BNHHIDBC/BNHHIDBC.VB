@@ -61,6 +61,8 @@ Public Class FRMHHIDBC
     Public WithEvents tlbStrumenti As NTSInformatica.NTSBarSubItem
     Public WithEvents tlbGuida As NTSInformatica.NTSBarButtonItem
     Public WithEvents tlbEsci As NTSInformatica.NTSBarButtonItem
+    Friend WithEvents grLink As NTSGrid
+    Friend WithEvents grvLink As NTSGridView
     Public WithEvents pnIdbc As NTSInformatica.NTSPanel
 
 #End Region
@@ -108,9 +110,14 @@ Public Class FRMHHIDBC
         Me.barDockControlLeft = New DevExpress.XtraBars.BarDockControl()
         Me.barDockControlRight = New DevExpress.XtraBars.BarDockControl()
         Me.pnIdbc = New NTSInformatica.NTSPanel()
+        Me.grLink = New NTSInformatica.NTSGrid()
+        Me.grvLink = New NTSInformatica.NTSGridView()
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.pnIdbc.SuspendLayout()
+        CType(Me.grLink, System.ComponentModel.ISupportInitialize).BeginInit()
+        CType(Me.grvLink, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'NtsBarManager1
@@ -209,10 +216,35 @@ Public Class FRMHHIDBC
         Me.pnIdbc.Appearance.BackColor = System.Drawing.Color.Transparent
         Me.pnIdbc.Appearance.Options.UseBackColor = True
         Me.pnIdbc.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder
+        Me.pnIdbc.Controls.Add(Me.grLink)
         Me.pnIdbc.Dock = System.Windows.Forms.DockStyle.Fill
         Me.pnIdbc.Location = New System.Drawing.Point(0, 24)
         Me.pnIdbc.Name = "pnIdbc"
         Me.pnIdbc.Size = New System.Drawing.Size(684, 380)
+        '
+        'grLink
+        '
+        Me.grLink.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.grLink.Location = New System.Drawing.Point(0, 0)
+        Me.grLink.MainView = Me.grvLink
+        Me.grLink.MenuManager = Me.NtsBarManager1
+        Me.grLink.Name = "grLink"
+        Me.grLink.NTSNoRidimensionamentoUltimaColonna = False
+        Me.grLink.Size = New System.Drawing.Size(684, 380)
+        Me.grLink.ViewCollection.AddRange(New DevExpress.XtraGrid.Views.Base.BaseView() {Me.grvLink})
+        '
+        'grvLink
+        '
+        Me.grvLink.Enabled = True
+        Me.grvLink.GridControl = Me.grLink
+        Me.grvLink.Name = "grvLink"
+        Me.grvLink.OptionsCustomization.AllowRowSizing = True
+        Me.grvLink.OptionsNavigation.EnterMoveNextColumn = True
+        Me.grvLink.OptionsNavigation.UseTabKey = False
+        Me.grvLink.OptionsSelection.EnableAppearanceFocusedRow = False
+        Me.grvLink.OptionsView.ColumnAutoWidth = False
+        Me.grvLink.OptionsView.NewItemRowPosition = DevExpress.XtraGrid.Views.Grid.NewItemRowPosition.Bottom
+        Me.grvLink.OptionsView.ShowGroupPanel = False
         '
         'FRMHHIDBC
         '
@@ -228,6 +260,9 @@ Public Class FRMHHIDBC
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.pnIdbc.ResumeLayout(False)
+        CType(Me.grLink, System.ComponentModel.ISupportInitialize).EndInit()
+        CType(Me.grvLink, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -247,11 +282,20 @@ Public Class FRMHHIDBC
 
 
     Public Overridable Sub FRMHHIDBC_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
+
+        Dim ds As New DataSet
         Try
-
-
             'Predispongo i controlli
             InitControls()
+
+
+            If Not oCleIdbc.GetData_from_DBCent(ds) Then
+                Me.Close()
+            End If
+
+            dcIdbc.DataSource = ds.Tables("BOM_PADRI")
+            grLink.DataSource = dcIdbc
+            ds.AcceptChanges()
 
         Catch ex As Exception
             '-------------------------------------------------
@@ -283,7 +327,7 @@ Public Class FRMHHIDBC
             End Try
             tlbMain.NTSSetToolTip()
 
-
+            grvLink.NTSSetParam(oMenu, "Griglia link")
 
 
             'Chiamo lo script per inizializzare i controlli caricati con Source Extender
