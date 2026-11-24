@@ -306,6 +306,13 @@ Public Class CLFVEBOLL
                 Return False
             End If
 
+            ' se non c'è un'assicurazione impostata avviso l'operatore.
+            If oHHAssicurazione Is Nothing Then
+                ' devo controllare anche il valore del fido che sia superiore a 0?
+                ThrowRemoteEvent(New NTSEventArgs(ThMsg.MSG_INFO, "Attenzione! Il cliente non ha un'assicurazione impostata!"))
+                Return False
+            End If
+
             ' controllo se l'assicurazione è annullata
             If oHHAssicurazione.oTipo = HHTipoAssicurazione.Annullata Then
                 ThrowRemoteEvent(New NTSEventArgs("", $"Attenzione! l'assicurazione è {oHHAssicurazione.strDescrizione}"))

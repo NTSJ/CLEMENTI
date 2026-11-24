@@ -246,21 +246,28 @@ Public Class CLEHHTASS
                 Return False
             End If
 
-            If Not oCldTass.LeggiTabella(strDittaCorrente, dsAssicur, NTSCInt(dttConto.Rows(0)!an_hhcodtipoassicur)) Then
-                ThrowRemoteEvent(New NTSEventArgs("", "Errore aprendo l'anagrafica dell'assicurazione"))
-                Return False
-            End If
+            If NTSCInt(dttConto.Rows(0)!an_hhcodtipoassicur) <> 0 Then
+                ' se c'è 
 
-            With dsAssicur.Tables("HH_TIPIASSICURAZIONE").Rows(0)
-                oOut.nConto = nConto
-                oOut.nCodice = NTSCInt(!tb_codtipoassicur)
-                oOut.strDescrizione = !tb_destipoassicur.ToString
-                oOut.oTipo = CType(NTSCInt(!tb_tipo), HHTipoAssicurazione)
-                oOut.bGestita_a_scadenza = CType(IIf(!tb_flscadenza.ToString = "S", 1, 0), Boolean)
-                oOut.nMesiValidita = NTSCInt(!tb_duratamesi)
-                oOut.dDataInizioVal = NTSCDate(dttConto.Rows(0)!an_hhdatainizioassicur)
-                ' la data fine viene calcolata in automatico
-            End With
+                If Not oCldTass.LeggiTabella(strDittaCorrente, dsAssicur, NTSCInt(dttConto.Rows(0)!an_hhcodtipoassicur)) Then
+                    ThrowRemoteEvent(New NTSEventArgs("", "Errore aprendo l'anagrafica dell'assicurazione"))
+                    Return False
+                End If
+
+                With dsAssicur.Tables("HH_TIPIASSICURAZIONE").Rows(0)
+                    oOut.nConto = nConto
+                    oOut.nCodice = NTSCInt(!tb_codtipoassicur)
+                    oOut.strDescrizione = !tb_destipoassicur.ToString
+                    oOut.oTipo = CType(NTSCInt(!tb_tipo), HHTipoAssicurazione)
+                    oOut.bGestita_a_scadenza = CType(IIf(!tb_flscadenza.ToString = "S", 1, 0), Boolean)
+                    oOut.nMesiValidita = NTSCInt(!tb_duratamesi)
+                    oOut.dDataInizioVal = NTSCDate(dttConto.Rows(0)!an_hhdatainizioassicur)
+                    ' la data fine viene calcolata in automatico
+                End With
+            Else
+                ' se non c'è un'assicurazione impostato restituisco l'ogggetto Nothing
+                oOut = Nothing
+            End If
 
 
             Return True
