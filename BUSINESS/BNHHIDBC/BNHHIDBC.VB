@@ -63,6 +63,7 @@ Public Class FRMHHIDBC
     Public WithEvents tlbEsci As NTSInformatica.NTSBarButtonItem
     Friend WithEvents grLink As NTSGrid
     Friend WithEvents grvLink As NTSGridView
+    Friend WithEvents tlbElabora As NTSBarButtonItem
     Public WithEvents pnIdbc As NTSInformatica.NTSPanel
 
 #End Region
@@ -112,6 +113,7 @@ Public Class FRMHHIDBC
         Me.pnIdbc = New NTSInformatica.NTSPanel()
         Me.grLink = New NTSInformatica.NTSGrid()
         Me.grvLink = New NTSInformatica.NTSGridView()
+        Me.tlbElabora = New NTSInformatica.NTSBarButtonItem()
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -129,8 +131,8 @@ Public Class FRMHHIDBC
         Me.NtsBarManager1.DockControls.Add(Me.barDockControlLeft)
         Me.NtsBarManager1.DockControls.Add(Me.barDockControlRight)
         Me.NtsBarManager1.Form = Me
-        Me.NtsBarManager1.Items.AddRange(New DevExpress.XtraBars.BarItem() {Me.tlbZoom, Me.tlbStrumenti, Me.tlbGuida, Me.tlbEsci})
-        Me.NtsBarManager1.MaxItemId = 16
+        Me.NtsBarManager1.Items.AddRange(New DevExpress.XtraBars.BarItem() {Me.tlbZoom, Me.tlbStrumenti, Me.tlbGuida, Me.tlbEsci, Me.tlbElabora})
+        Me.NtsBarManager1.MaxItemId = 17
         '
         'tlbMain
         '
@@ -138,7 +140,7 @@ Public Class FRMHHIDBC
         Me.tlbMain.DockCol = 0
         Me.tlbMain.DockRow = 0
         Me.tlbMain.DockStyle = DevExpress.XtraBars.BarDockStyle.Top
-        Me.tlbMain.LinksPersistInfo.AddRange(New DevExpress.XtraBars.LinkPersistInfo() {New DevExpress.XtraBars.LinkPersistInfo(Me.tlbZoom), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbStrumenti, True), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbGuida, True), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbEsci)})
+        Me.tlbMain.LinksPersistInfo.AddRange(New DevExpress.XtraBars.LinkPersistInfo() {New DevExpress.XtraBars.LinkPersistInfo(Me.tlbElabora), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbZoom, True), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbStrumenti, True), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbGuida, True), New DevExpress.XtraBars.LinkPersistInfo(Me.tlbEsci)})
         Me.tlbMain.OptionsBar.AllowQuickCustomization = False
         Me.tlbMain.OptionsBar.DisableClose = True
         Me.tlbMain.OptionsBar.DrawDragBorder = False
@@ -246,6 +248,13 @@ Public Class FRMHHIDBC
         Me.grvLink.OptionsView.NewItemRowPosition = DevExpress.XtraGrid.Views.Grid.NewItemRowPosition.Bottom
         Me.grvLink.OptionsView.ShowGroupPanel = False
         '
+        'tlbElabora
+        '
+        Me.tlbElabora.Caption = "Elabora"
+        Me.tlbElabora.Id = 16
+        Me.tlbElabora.Name = "tlbElabora"
+        Me.tlbElabora.Visible = True
+        '
         'FRMHHIDBC
         '
         Me.ClientSize = New System.Drawing.Size(684, 404)
@@ -287,15 +296,6 @@ Public Class FRMHHIDBC
         Try
             'Predispongo i controlli
             InitControls()
-
-
-            If Not oCleIdbc.GetData_from_DBCent(ds) Then
-                Me.Close()
-            End If
-
-            dcIdbc.DataSource = ds.Tables("BOM_PADRI")
-            grLink.DataSource = dcIdbc
-            ds.AcceptChanges()
 
         Catch ex As Exception
             '-------------------------------------------------
@@ -376,6 +376,31 @@ Public Class FRMHHIDBC
             '-------------------------------------------------
         End Try
     End Sub
+
+    Public Overridable Sub tlbElabora_ItemClick(sender As Object, e As DevExpress.XtraBars.ItemClickEventArgs) Handles tlbElabora.ItemClick
+        Try
+            Elabora()
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, "")
+        End Try
+    End Sub
+
+    Public Overridable Function Elabora() As Boolean
+
+        Try
+            If Not oCleIdbc.ElaboraDati() Then
+
+                Return False
+            End If
+
+
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, "")
+        End Try
+    End Function
+
 
 
 #End Region

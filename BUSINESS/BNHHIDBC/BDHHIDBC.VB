@@ -76,7 +76,7 @@ Public Class CLDHHIDBC
     End Sub
 
 
-#Region ""
+
 
     Public Overridable Function GetDataDBCent(ByRef ds As DataSet) As Boolean
 
@@ -122,9 +122,6 @@ Public Class CLDHHIDBC
             CLN__STD.GestErr(ex, Me, "")
         End Try
     End Function
-
-
-#End Region
 
 
 

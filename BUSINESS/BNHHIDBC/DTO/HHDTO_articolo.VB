@@ -7,7 +7,7 @@ Public Class HHDTO_articolo
     Public Property BOM_UID As String
     Public Property CODE As String
     Public Property DESC1 As String
-
+    Public Property UM As String
 
 
 End Class

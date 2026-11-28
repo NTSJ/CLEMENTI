@@ -11,6 +11,9 @@ Public Class CLEHHIDBC
 
     Public oCldIdbc As CLDHHIDBC  'oggetto DAL
 
+    ' Elenco oggetti che rappresentano le distinte base
+    Public olsDistinteBase As New List(Of HHDTO_distbas)
+
 #End Region
 
 #Region "moduli"
@@ -78,14 +81,16 @@ Public Class CLEHHIDBC
         End Try
     End Sub
 
-    Public Overridable Function GetData_from_DBCent(ByRef ds As DataSet) As Boolean
+
+    Public Overridable Function GetData_from_DBCent() As Boolean
 
         Dim dttLink As DataTable = Nothing ' BOMDB_LINK
         Dim dttFigli As DataTable = Nothing
         Dim dttArticoli As DataTable = Nothing ' BOMDB_DOC
-        Dim oDistinteBase As New List(Of HHDTO_distbas) ' Elenco distitne base lette
+        Dim ds As New DataSet
+
         Try
-            ' leggo l'intera tabella BOMDB_LINK
+            ' leggo l'intera tabella BOMDB_LINK e BOMDB_DOC
             If Not oCldIdbc.GetDataDBCent(ds) Then Return False
             dttLink = ds.Tables("BOMDB_LINK")
             dttArticoli = ds.Tables("BOMDB_DOC")
@@ -98,6 +103,9 @@ Public Class CLEHHIDBC
                                             CopyToDataTable().DefaultView.ToTable(True, {"BOM_ORDER", "BOM_PARENT", "CODE", "DESC1"})
 
 
+            ' per ogni codice padre creo un oggetto che rappresenta 
+            ' la distinta base con tutte le relazioni PADRE-FIGLIO e relativa
+            ' anagrafiche articolo del padre e del figlio
             For Each dtr As DataRow In dttPadre.Rows
 
                 Dim strCodicePF As String = dtr!BOM_ORDER.ToString
@@ -110,7 +118,7 @@ Public Class CLEHHIDBC
                 End If
 
                 ' Creo la distinta del prodotto finito. HHDTO_distbas contiene l'oggetto movdis
-                ' di tipo List (of HHDTO_movdis_row)
+                ' di tipo List (of HHDTO_movdis_row) e HHDTO_articolo per le anagrafiche articolo
                 Dim oDistinta As New HHDTO_distbas With {.strCoddb = strCodicePF}
 
                 ' Avvio la lettura ricorsiva dalla radice
@@ -121,7 +129,7 @@ Public Class CLEHHIDBC
                     dizArticoli,
                     1)
 
-                oDistinteBase.Add(oDistinta)
+                olsDistinteBase.Add(oDistinta)
 
             Next
 
@@ -133,7 +141,15 @@ Public Class CLEHHIDBC
     End Function
 
 
-    Private Sub LeggiRicorsivanenteDistinte(
+    ''' <summary>
+    ''' Legge la distinta base fino all'ultimo livello
+    ''' </summary>
+    ''' <param name="dttBom"></param>
+    ''' <param name="strCodicePadre"></param>
+    ''' <param name="lstRelazioni"></param>
+    ''' <param name="dizArticoli"></param>
+    ''' <param name="intLivello"></param>
+    Public Overridable Sub LeggiRicorsivanenteDistinte(
                     ByVal dttBom As DataTable,
                     ByVal strCodicePadre As String,
                     ByRef lstRelazioni As List(Of HHDTO_movdis_row),
@@ -154,6 +170,9 @@ Public Class CLEHHIDBC
 
             Dim strCodiceFiglio As String = CStr(dr!BOM_CHILD)
 
+            ' --------------------------------------------------
+            ' leggo l'anagrafica del codice padre e del codice figli.
+            ' l'anagrafica non viene riletta ogni volta ma ripresa da un indice letto in precedenza
             Dim oArticoloPadre As HHDTO_articolo = Nothing
             Dim oArticoloFiglio As HHDTO_articolo = Nothing
 
@@ -164,7 +183,7 @@ Public Class CLEHHIDBC
             If Not dizArticoli.TryGetValue(strCodiceFiglio, oArticoloFiglio) Then
                 Throw New Exception($"Anagrafica figlio non trovata: {strCodiceFiglio}")
             End If
-
+            ' --------------------------------------------------
 
 
             ' verifico se l'articolo corrente è l'ultimo livello della distinta base.
@@ -172,10 +191,7 @@ Public Class CLEHHIDBC
             ' anagrafica articoli DBCENT ovvero BOMDB_DOC per leggere alcuni campi dove
             ' dobbiamo leggere la VERA materia prima da aggiungere sotto perché in SolidWork
             ' non viene gestita la MP vera e propria.
-            Dim blnUltimoLivello As Boolean =
-                        dttBom.Select(
-                            $"BOM_PARENT={CStrSQL(strCodiceFiglio)}"
-                        ).Length = 0
+            Dim blnUltimoLivello As Boolean = dttBom.Select($"BOM_PARENT={CStrSQL(strCodiceFiglio)}").Length = 0
 
 
             ' Creo la relazione padre-figlio
@@ -212,33 +228,59 @@ Public Class CLEHHIDBC
     ''' <returns></returns>
     Public Overridable Function CreaIndiceArticoli(ByVal dttArticoli As DataTable) As Dictionary(Of String, HHDTO_articolo)
 
+        ' collezione di HHDTO_articolo 
         Dim dizArticoli As New Dictionary(Of String, HHDTO_articolo)(StringComparer.OrdinalIgnoreCase)
 
-        For Each dr As DataRow In dttArticoli.Rows
+        Try
 
-            Dim strUID As String = Convert.ToString(dr!BOM_UID).Trim()
+            For Each dr As DataRow In dttArticoli.Rows
 
-            If String.IsNullOrWhiteSpace(strUID) Then Continue For
+                Dim strUID As String = Convert.ToString(dr!BOM_UID).Trim()
 
-            ' Verifico che il codice non sia già presente
-            If dizArticoli.ContainsKey(strUID) Then
-                Throw New Exception(
-                        $"Codice BOM_UID duplicato in BOMDB_DOC: {strUID}")
-            End If
+                If String.IsNullOrWhiteSpace(strUID) Then Continue For
 
-            Dim oArticolo As New HHDTO_articolo With {
-                    .BOM_UID = strUID,
-                    .CODE = Convert.ToString(dr!CODE),
-                    .DESC1 = Convert.ToString(dr!DESC1)
-                }
+                ' Verifico che il codice non sia già presente
+                If dizArticoli.ContainsKey(strUID) Then
+                    Throw New Exception(
+                            $"Codice BOM_UID duplicato in BOMDB_DOC: {strUID}")
+                End If
 
-            dizArticoli.Add(strUID, oArticolo)
+                Dim oArticolo As New HHDTO_articolo With {
+                        .BOM_UID = strUID,
+                        .CODE = Convert.ToString(dr!CODE),
+                        .DESC1 = Convert.ToString(dr!DESC1),
+                        .UM = "NR" ' come corcodato con il cliente, l'um degli articoli importati è fissa a NR
+                    }
 
-        Next
+                dizArticoli.Add(strUID, oArticolo)
+
+            Next
+
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, oApp.InfoError)
+        End Try
 
         Return dizArticoli
 
     End Function
 
 
+    ''' <summary>
+    ''' Main function. E' quella che viene richiamata dal livello superiore e che guida
+    ''' tutto l'import
+    ''' </summary>
+    ''' <returns></returns>
+    Public Overridable Function ElaboraDati() As Boolean
+
+        Try
+
+            If Not GetData_from_DBCent() Then
+
+            End If
+
+            Return True
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, oApp.InfoError)
+        End Try
+    End Function
 End Class
