@@ -14,6 +14,10 @@ Public Class CLEHHIDBC
     ' Elenco oggetti che rappresentano le distinte base
     Public olsDistinteBase As New List(Of HHDTO_distbas)
 
+    ' dizionario dei tipi componente (PF, SL, MP)
+    Private dizTipiComponenti As New Dictionary(Of String, HH_TipoComponente)(StringComparer.OrdinalIgnoreCase
+)
+
 #End Region
 
 #Region "moduli"
@@ -91,7 +95,7 @@ Public Class CLEHHIDBC
 
         Try
             olsDistinteBase.Clear()
-
+            dizTipiComponenti.Clear()
 
             ' leggo l'intera tabella BOMDB_LINK e BOMDB_DOC
             If Not oCldIdbc.GetDataDBCent(ds) Then Return False
@@ -102,6 +106,10 @@ Public Class CLEHHIDBC
             If dttLink Is Nothing OrElse dttArticoli Is Nothing Then
                 ThrowRemoteEvent(New NTSEventArgs("", "Tabelle BOMDB_LINK o BOMDB_DOC non disponibili."))
             End If
+
+            ' Ricostruisce la classificazione dei componenti
+            ' sulla base delle relazioni esportate da DBCent.
+            CreaIndiceTipiComponenti(dttLink)
 
 
             ' Creo l'indice delle anagrafiche articoli
@@ -459,4 +467,66 @@ Public Class CLEHHIDBC
             CLN__STD.GestErr(ex, Me, oApp.InfoError)
         End Try
     End Function
+
+
+    ''' <summary>
+    ''' Restituisce il tipo componente (PF,SL,MP) dell'articolo corrispondente all'UID indicato
+    ''' </summary>
+    ''' <param name="strUID"></param>
+    ''' <param name="tipo"></param>
+    ''' <returns></returns>
+    Public Overridable Function TryGetTipoComponente(
+                                            ByVal strUID As String,
+                                            ByRef tipo As HH_TipoComponente
+                                        ) As Boolean
+
+        If String.IsNullOrWhiteSpace(strUID) Then Return False
+        If dizTipiComponenti Is Nothing Then Return False
+        Return dizTipiComponenti.TryGetValue(strUID.Trim(), tipo)
+
+    End Function
+
+    ''' <summary>
+    ''' Creazione indice componenti
+    ''' </summary>
+    ''' <param name="dttLink"></param>
+    Public Overridable Sub CreaIndiceTipiComponenti(ByVal dttLink As DataTable)
+
+        Dim hsPadri As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
+        Dim hsFigli As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
+        Dim dizNuovo As New Dictionary(Of String, HH_TipoComponente)(StringComparer.OrdinalIgnoreCase)
+
+        ' Individua tutti gli articoli presenti come padre e come figlio.
+        For Each dr As DataRow In dttLink.Rows
+
+            Dim strUidPadre As String = Convert.ToString(dr("BOM_PARENT")).Trim()
+            Dim strUidFiglio As String = Convert.ToString(dr("BOM_CHILD")).Trim()
+            If strUidPadre <> "" Then hsPadri.Add(strUidPadre)
+            If strUidFiglio <> "" Then hsFigli.Add(strUidFiglio)
+
+        Next
+
+        ' Classificazione degli articoli presenti come padre.
+        For Each strUID As String In hsPadri
+
+            If hsFigli.Contains(strUID) Then
+                dizNuovo.Add(strUID, HH_TipoComponente.SL)
+            Else
+                dizNuovo.Add(strUID, HH_TipoComponente.PF)
+            End If
+
+        Next
+
+        ' Gli articoli presenti esclusivamente come figli sono materie prime.
+        For Each strUID As String In hsFigli
+
+            If Not hsPadri.Contains(strUID) Then
+                dizNuovo.Add(strUID, HH_TipoComponente.MP)
+            End If
+
+        Next
+
+        dizTipiComponenti = dizNuovo
+
+    End Sub
 End Class

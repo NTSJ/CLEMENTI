@@ -118,6 +118,7 @@
     <Compile Include="DTO\HHDTO_distbas.VB" />
     <Compile Include="DTO\HHDTO_articolo.VB" />
     <Compile Include="DTO\HHDTO_movdis_row.VB" />
+    <Compile Include="DTO\HH_TipoComponente.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

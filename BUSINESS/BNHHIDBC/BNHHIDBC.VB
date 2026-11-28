@@ -63,6 +63,9 @@ Public Class FRMHHIDBC
     Public WithEvents tlbEsci As NTSInformatica.NTSBarButtonItem
     Friend WithEvents tlbElabora As NTSBarButtonItem
     Friend WithEvents trDiba As NTSTreeView
+    Friend WithEvents ImageList1 As ImageList
+    Friend WithEvents fmRisultati As NTSGroupBox
+    Friend WithEvents NtsSplitter1 As NTSSplitter
     Public WithEvents pnIdbc As NTSInformatica.NTSPanel
 
 #End Region
@@ -112,10 +115,15 @@ Public Class FRMHHIDBC
         Me.pnIdbc = New NTSInformatica.NTSPanel()
         Me.tlbElabora = New NTSInformatica.NTSBarButtonItem()
         Me.trDiba = New NTSInformatica.NTSTreeView()
+        Me.ImageList1 = New System.Windows.Forms.ImageList(Me.components)
+        Me.fmRisultati = New NTSInformatica.NTSGroupBox()
+        Me.NtsSplitter1 = New NTSInformatica.NTSSplitter()
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnIdbc.SuspendLayout()
+        CType(Me.fmRisultati, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.fmRisultati.SuspendLayout()
         Me.SuspendLayout()
         '
         'NtsBarManager1
@@ -214,7 +222,7 @@ Public Class FRMHHIDBC
         Me.pnIdbc.Appearance.BackColor = System.Drawing.Color.Transparent
         Me.pnIdbc.Appearance.Options.UseBackColor = True
         Me.pnIdbc.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder
-        Me.pnIdbc.Controls.Add(Me.trDiba)
+        Me.pnIdbc.Controls.Add(Me.fmRisultati)
         Me.pnIdbc.Dock = System.Windows.Forms.DockStyle.Fill
         Me.pnIdbc.Location = New System.Drawing.Point(0, 24)
         Me.pnIdbc.Name = "pnIdbc"
@@ -229,11 +237,38 @@ Public Class FRMHHIDBC
         '
         'trDiba
         '
-        Me.trDiba.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.trDiba.Location = New System.Drawing.Point(0, 0)
+        Me.trDiba.Dock = System.Windows.Forms.DockStyle.Left
+        Me.trDiba.Location = New System.Drawing.Point(2, 23)
         Me.trDiba.Name = "trDiba"
-        Me.trDiba.Size = New System.Drawing.Size(684, 380)
+        Me.trDiba.Size = New System.Drawing.Size(481, 355)
         Me.trDiba.TabIndex = 0
+        '
+        'ImageList1
+        '
+        Me.ImageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit
+        Me.ImageList1.ImageSize = New System.Drawing.Size(16, 16)
+        Me.ImageList1.TransparentColor = System.Drawing.Color.Transparent
+        '
+        'fmRisultati
+        '
+        Me.fmRisultati.AllowDrop = True
+        Me.fmRisultati.Appearance.BackColor = System.Drawing.Color.Transparent
+        Me.fmRisultati.Appearance.Options.UseBackColor = True
+        Me.fmRisultati.Controls.Add(Me.NtsSplitter1)
+        Me.fmRisultati.Controls.Add(Me.trDiba)
+        Me.fmRisultati.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.fmRisultati.Location = New System.Drawing.Point(0, 0)
+        Me.fmRisultati.Name = "fmRisultati"
+        Me.fmRisultati.Size = New System.Drawing.Size(684, 380)
+        Me.fmRisultati.Text = "RISULTATO IMPORTAZIONE DISTINTE BASE"
+        '
+        'NtsSplitter1
+        '
+        Me.NtsSplitter1.Location = New System.Drawing.Point(483, 23)
+        Me.NtsSplitter1.Name = "NtsSplitter1"
+        Me.NtsSplitter1.Size = New System.Drawing.Size(3, 355)
+        Me.NtsSplitter1.TabIndex = 1
+        Me.NtsSplitter1.TabStop = False
         '
         'FRMHHIDBC
         '
@@ -250,6 +285,8 @@ Public Class FRMHHIDBC
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnIdbc.ResumeLayout(False)
+        CType(Me.fmRisultati, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.fmRisultati.ResumeLayout(False)
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -289,6 +326,36 @@ Public Class FRMHHIDBC
 
 #End Region
 
+
+#Region "Eventi"
+    Public Overridable Sub trDiba_AfterExpand(ByVal sender As Object, ByVal e As TreeViewEventArgs) Handles trDiba.AfterExpand
+
+        Try
+            AggiornaImmagineNodo(e.Node)
+            trDiba.SelectedNode = e.Node
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, "")
+        End Try
+
+
+    End Sub
+
+    Public Overridable Sub trDiba_AfterCollapse(ByVal sender As Object, ByVal e As TreeViewEventArgs) Handles trDiba.AfterCollapse
+        Try
+            AggiornaImmagineNodo(e.Node)
+            trDiba.SelectedNode = e.Node
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, "")
+        End Try
+    End Sub
+
+    Public Overridable Sub trDiba_AfterSelect(ByVal sender As System.Object, ByVal e As System.Windows.Forms.TreeViewEventArgs) Handles trDiba.AfterSelect
+        AggiornaImmagineNodo(e.Node)
+    End Sub
+
+#End Region
+
+
     Public Overridable Sub InitControls()
         InitControlsBeginEndInit(Me, False)
 
@@ -306,6 +373,13 @@ Public Class FRMHHIDBC
             End Try
             tlbMain.NTSSetToolTip()
 
+            oApp.NTSSetImageListSize("TREEVIEW", ImageList1)
+            ImageList1.Images.Add("prima", oApp.NTSBitmapFromFile("TREEVIEW", oApp.ChildImageDir & "\materia_prima.png")) ' prima materia prima
+            ImageList1.Images.Add("semi", oApp.NTSBitmapFromFile("TREEVIEW", oApp.ChildImageDir & "\tr_closed.png")) 'semi semilavorato
+            ImageList1.Images.Add("semi-ap", oApp.NTSBitmapFromFile("TREEVIEW", oApp.ChildImageDir & "\tr_open.png")) 'semi-ap semilavorato corrente
+            ImageList1.Images.Add("lavo", oApp.NTSBitmapFromFile("TREEVIEW", oApp.ChildImageDir & "\chiaveinglese.png")) 'lavorazionr corrente
+            trDiba.ImageList = ImageList1
+
 
             'Chiamo lo script per inizializzare i controlli caricati con Source Extender
             NTSScriptExec("InitControls", Me, Nothing)
@@ -322,16 +396,11 @@ Public Class FRMHHIDBC
 
 #Region "Toolbar"
 
-
-
     Public Overridable Sub tlbZoom_ItemClick(ByVal sender As System.Object, ByVal e As DevExpress.XtraBars.ItemClickEventArgs) Handles tlbZoom.ItemClick
         Dim oParam As New CLE__CLDP
 
         Try
-
             NTSCallStandardZoom()
-
-
         Catch ex As Exception
             '-------------------------------------------------
             CLN__STD.GestErr(ex, Me, "")
@@ -361,11 +430,13 @@ Public Class FRMHHIDBC
             CLN__STD.GestErr(ex, Me, "")
         End Try
     End Sub
+#End Region
+
+
+#Region "Logica applicativa"
 
     Public Overridable Function Elabora() As Boolean
-
         Try
-
             trDiba.Nodes.Clear()
 
             If Not oCleIdbc.ElaboraDati() Then
@@ -382,6 +453,10 @@ Public Class FRMHHIDBC
         End Try
     End Function
 
+
+    ''' <summary>
+    ''' Costruzione della rappresentazione TreeView
+    ''' </summary>
     Public Overridable Sub VisualizzaDistinte()
 
         trDiba.BeginUpdate()
@@ -397,18 +472,16 @@ Public Class FRMHHIDBC
                 End If
 
                 ' Creo il nodo radice.
-                Dim oNodoRadice As New TreeNode(
-                    CreaTestoNodo(oDistinta.oCodiceDistinta)
-                )
+                Dim oNodoRadice As New TreeNode(CreaTestoNodo(oDistinta.oCodiceDistinta))
+                ' imposta immagine
+                ImpostaImmagineNodo(oNodoRadice, oDistinta.oCodiceDistinta.BOM_UID)
 
                 oNodoRadice.Tag = oDistinta.oCodiceDistinta
 
                 trDiba.Nodes.Add(oNodoRadice)
 
                 ' Raggruppo le relazioni per UID padre.
-                Dim dizFigli As New Dictionary(
-                    Of String, List(Of HHDTO_movdis_row)
-                )(StringComparer.OrdinalIgnoreCase)
+                Dim dizFigli As New Dictionary(Of String, List(Of HHDTO_movdis_row))(StringComparer.OrdinalIgnoreCase)
 
                 For Each oRelazione As HHDTO_movdis_row In oDistinta.oMovdis
 
@@ -449,11 +522,11 @@ Public Class FRMHHIDBC
     End Sub
 
     Public Overridable Sub AggiungiNodiFigli(
-    ByVal oNodoPadre As TreeNode,
-    ByVal strUidPadre As String,
-    ByVal dizFigli As Dictionary(Of String, List(Of HHDTO_movdis_row)),
-    ByVal hsPercorso As HashSet(Of String)
-)
+                                                ByVal oNodoPadre As TreeNode,
+                                                ByVal strUidPadre As String,
+                                                ByVal dizFigli As Dictionary(Of String, List(Of HHDTO_movdis_row)),
+                                                ByVal hsPercorso As HashSet(Of String)
+                                            )
 
         If Not dizFigli.ContainsKey(strUidPadre) Then Return
 
@@ -469,12 +542,13 @@ Public Class FRMHHIDBC
             End If
 
             ' Creo il nodo del componente.
-            Dim oNodoFiglio As New TreeNode(
-                CreaTestoNodo(oRelazione.oCodiceFiglio)
-            )
+            Dim oNodoFiglio As New TreeNode(CreaTestoNodo(oRelazione.oCodiceFiglio))
 
             ' Conservo la relazione associata a questa specifica occorrenza.
             oNodoFiglio.Tag = oRelazione
+
+            ' imposta immagine nodo
+            ImpostaImmagineNodo(oNodoFiglio, oRelazione.UID_Figlio)
 
             oNodoPadre.Nodes.Add(oNodoFiglio)
 
@@ -498,8 +572,7 @@ Public Class FRMHHIDBC
 
     End Sub
 
-    Public Overridable Function CreaTestoNodo(
-    ByVal oArticolo As HHDTO_articolo) As String
+    Public Overridable Function CreaTestoNodo(ByVal oArticolo As HHDTO_articolo) As String
 
         If oArticolo Is Nothing Then
             Return "(Articolo non disponibile)"
@@ -510,6 +583,70 @@ Public Class FRMHHIDBC
     End Function
 
 
+    ''' <summary>
+    '''  Assegna l'immagine al nodo in base alla tipologia del componente (PF,SL,MP)
+    ''' </summary>
+    ''' <param name="oNodo"></param>
+    ''' <param name="strUID"></param>
+    Public Overridable Sub ImpostaImmagineNodo(ByVal oNodo As TreeNode, ByVal strUID As String)
+
+        Dim tipo As HH_TipoComponente
+        If Not oCleIdbc.TryGetTipoComponente(strUID, tipo) Then
+            Throw New Exception("Tipologia non determinata per l'articolo UID: " & strUID)
+        End If
+
+        Select Case tipo
+            Case HH_TipoComponente.PF, HH_TipoComponente.SL
+                oNodo.ImageIndex = 1
+                oNodo.SelectedImageIndex = 2
+            Case HH_TipoComponente.MP
+                oNodo.ImageIndex = 0
+                oNodo.SelectedImageIndex = 0
+            Case Else
+                Throw New Exception("Tipologia componente non gestita per UID: " & strUID)
+        End Select
+    End Sub
+
+
+    ''' <summary>
+    ''' Aggiornamento immagine dei nodi 
+    ''' </summary>
+    ''' <param name="oNodo"></param>
+    Public Overridable Sub AggiornaImmagineNodo(ByVal oNodo As TreeNode)
+
+        Try
+
+            If oNodo Is Nothing Then Return
+            Dim strUID As String = ""
+            If TypeOf oNodo.Tag Is HHDTO_articolo Then
+                strUID = DirectCast(oNodo.Tag, HHDTO_articolo).BOM_UID
+            ElseIf TypeOf oNodo.Tag Is HHDTO_movdis_row Then
+                strUID = DirectCast(oNodo.Tag, HHDTO_movdis_row).UID_Figlio
+
+            End If
+
+            Dim tipo As HH_TipoComponente
+            If Not oCleIdbc.TryGetTipoComponente(strUID, tipo) Then Return
+
+            Select Case tipo
+                Case HH_TipoComponente.PF, HH_TipoComponente.SL
+                    If oNodo.IsExpanded Then
+                        oNodo.ImageIndex = 2
+                        oNodo.SelectedImageIndex = 2
+                    Else
+                        oNodo.ImageIndex = 1
+                        oNodo.SelectedImageIndex = 1
+                    End If
+                Case HH_TipoComponente.MP
+                    oNodo.ImageIndex = 0
+                    oNodo.SelectedImageIndex = 0
+            End Select
+
+        Catch ex As Exception
+            CLN__STD.GestErr(ex, Me, oApp.InfoError)
+        End Try
+    End Sub
 #End Region
+
 
 End Class
