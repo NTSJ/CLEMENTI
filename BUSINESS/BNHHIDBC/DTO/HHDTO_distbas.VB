@@ -5,6 +5,7 @@ Public Class HHDTO_distbas
     Inherits DTO__BASE
 
     Public Property strCoddb As String
+    Public Property oCodiceDistinta As New HHDTO_articolo
     Public Property oMovdis As New List(Of HHDTO_movdis_row)
 
 

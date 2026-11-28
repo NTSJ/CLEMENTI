@@ -1,6 +1,6 @@
 Imports System.Data
 Imports NTSInformatica.CLN__STD
-
+' Imports System.Windows.Forms
 Public Class FRMHHIDBC
 
 #Region "moduli"
@@ -61,9 +61,8 @@ Public Class FRMHHIDBC
     Public WithEvents tlbStrumenti As NTSInformatica.NTSBarSubItem
     Public WithEvents tlbGuida As NTSInformatica.NTSBarButtonItem
     Public WithEvents tlbEsci As NTSInformatica.NTSBarButtonItem
-    Friend WithEvents grLink As NTSGrid
-    Friend WithEvents grvLink As NTSGridView
     Friend WithEvents tlbElabora As NTSBarButtonItem
+    Friend WithEvents trDiba As NTSTreeView
     Public WithEvents pnIdbc As NTSInformatica.NTSPanel
 
 #End Region
@@ -111,15 +110,12 @@ Public Class FRMHHIDBC
         Me.barDockControlLeft = New DevExpress.XtraBars.BarDockControl()
         Me.barDockControlRight = New DevExpress.XtraBars.BarDockControl()
         Me.pnIdbc = New NTSInformatica.NTSPanel()
-        Me.grLink = New NTSInformatica.NTSGrid()
-        Me.grvLink = New NTSInformatica.NTSGridView()
         Me.tlbElabora = New NTSInformatica.NTSBarButtonItem()
+        Me.trDiba = New NTSInformatica.NTSTreeView()
         CType(Me.dttSmartArt, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.pnIdbc.SuspendLayout()
-        CType(Me.grLink, System.ComponentModel.ISupportInitialize).BeginInit()
-        CType(Me.grvLink, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'NtsBarManager1
@@ -218,35 +214,11 @@ Public Class FRMHHIDBC
         Me.pnIdbc.Appearance.BackColor = System.Drawing.Color.Transparent
         Me.pnIdbc.Appearance.Options.UseBackColor = True
         Me.pnIdbc.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder
-        Me.pnIdbc.Controls.Add(Me.grLink)
+        Me.pnIdbc.Controls.Add(Me.trDiba)
         Me.pnIdbc.Dock = System.Windows.Forms.DockStyle.Fill
         Me.pnIdbc.Location = New System.Drawing.Point(0, 24)
         Me.pnIdbc.Name = "pnIdbc"
         Me.pnIdbc.Size = New System.Drawing.Size(684, 380)
-        '
-        'grLink
-        '
-        Me.grLink.Dock = System.Windows.Forms.DockStyle.Fill
-        Me.grLink.Location = New System.Drawing.Point(0, 0)
-        Me.grLink.MainView = Me.grvLink
-        Me.grLink.MenuManager = Me.NtsBarManager1
-        Me.grLink.Name = "grLink"
-        Me.grLink.NTSNoRidimensionamentoUltimaColonna = False
-        Me.grLink.Size = New System.Drawing.Size(684, 380)
-        Me.grLink.ViewCollection.AddRange(New DevExpress.XtraGrid.Views.Base.BaseView() {Me.grvLink})
-        '
-        'grvLink
-        '
-        Me.grvLink.Enabled = True
-        Me.grvLink.GridControl = Me.grLink
-        Me.grvLink.Name = "grvLink"
-        Me.grvLink.OptionsCustomization.AllowRowSizing = True
-        Me.grvLink.OptionsNavigation.EnterMoveNextColumn = True
-        Me.grvLink.OptionsNavigation.UseTabKey = False
-        Me.grvLink.OptionsSelection.EnableAppearanceFocusedRow = False
-        Me.grvLink.OptionsView.ColumnAutoWidth = False
-        Me.grvLink.OptionsView.NewItemRowPosition = DevExpress.XtraGrid.Views.Grid.NewItemRowPosition.Bottom
-        Me.grvLink.OptionsView.ShowGroupPanel = False
         '
         'tlbElabora
         '
@@ -254,6 +226,14 @@ Public Class FRMHHIDBC
         Me.tlbElabora.Id = 16
         Me.tlbElabora.Name = "tlbElabora"
         Me.tlbElabora.Visible = True
+        '
+        'trDiba
+        '
+        Me.trDiba.Dock = System.Windows.Forms.DockStyle.Fill
+        Me.trDiba.Location = New System.Drawing.Point(0, 0)
+        Me.trDiba.Name = "trDiba"
+        Me.trDiba.Size = New System.Drawing.Size(684, 380)
+        Me.trDiba.TabIndex = 0
         '
         'FRMHHIDBC
         '
@@ -270,8 +250,6 @@ Public Class FRMHHIDBC
         CType(Me.NtsBarManager1, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.pnIdbc, System.ComponentModel.ISupportInitialize).EndInit()
         Me.pnIdbc.ResumeLayout(False)
-        CType(Me.grLink, System.ComponentModel.ISupportInitialize).EndInit()
-        CType(Me.grvLink, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -321,13 +299,12 @@ Public Class FRMHHIDBC
                 tlbStrumenti.GlyphPath = (oApp.ChildImageDir & "\options.png")
                 tlbGuida.GlyphPath = (oApp.ChildImageDir & "\help.png")
                 tlbEsci.GlyphPath = (oApp.ChildImageDir & "\exit.png")
+                tlbElabora.GlyphPath = (oApp.ChildImageDir & "\elabora.png")
             Catch ex As Exception
                 'Non gestisco l'errore: 
                 'se non c'è una immagine prendo quella a design
             End Try
             tlbMain.NTSSetToolTip()
-
-            grvLink.NTSSetParam(oMenu, "Griglia link")
 
 
             'Chiamo lo script per inizializzare i controlli caricati con Source Extender
@@ -388,19 +365,149 @@ Public Class FRMHHIDBC
     Public Overridable Function Elabora() As Boolean
 
         Try
-            If Not oCleIdbc.ElaboraDati() Then
 
+            trDiba.Nodes.Clear()
+
+            If Not oCleIdbc.ElaboraDati() Then
                 Return False
             End If
 
-
+            VisualizzaDistinte()
 
             Return True
+
         Catch ex As Exception
             CLN__STD.GestErr(ex, Me, "")
+            Return False
         End Try
     End Function
 
+    Public Overridable Sub VisualizzaDistinte()
+
+        trDiba.BeginUpdate()
+
+        Try
+
+            trDiba.Nodes.Clear()
+
+            For Each oDistinta As HHDTO_distbas In oCleIdbc.olsDistinteBase
+
+                If oDistinta.oCodiceDistinta Is Nothing Then
+                    Continue For
+                End If
+
+                ' Creo il nodo radice.
+                Dim oNodoRadice As New TreeNode(
+                    CreaTestoNodo(oDistinta.oCodiceDistinta)
+                )
+
+                oNodoRadice.Tag = oDistinta.oCodiceDistinta
+
+                trDiba.Nodes.Add(oNodoRadice)
+
+                ' Raggruppo le relazioni per UID padre.
+                Dim dizFigli As New Dictionary(
+                    Of String, List(Of HHDTO_movdis_row)
+                )(StringComparer.OrdinalIgnoreCase)
+
+                For Each oRelazione As HHDTO_movdis_row In oDistinta.oMovdis
+
+                    If Not dizFigli.ContainsKey(oRelazione.UID_Padre) Then
+
+                        dizFigli.Add(
+                            oRelazione.UID_Padre,
+                            New List(Of HHDTO_movdis_row)
+                        )
+
+                    End If
+
+                    dizFigli(oRelazione.UID_Padre).Add(oRelazione)
+
+                Next
+
+                ' Creo l'insieme degli UID presenti nel percorso corrente.
+                Dim hsPercorso As New HashSet(Of String)(
+                    StringComparer.OrdinalIgnoreCase
+                )
+
+                hsPercorso.Add(oDistinta.oCodiceDistinta.BOM_UID)
+
+                ' Costruisco tutti i livelli.
+                AggiungiNodiFigli(
+                    oNodoRadice,
+                    oDistinta.oCodiceDistinta.BOM_UID,
+                    dizFigli,
+                    hsPercorso
+                )
+
+            Next
+
+        Finally
+            trDiba.EndUpdate()
+        End Try
+
+    End Sub
+
+    Public Overridable Sub AggiungiNodiFigli(
+    ByVal oNodoPadre As TreeNode,
+    ByVal strUidPadre As String,
+    ByVal dizFigli As Dictionary(Of String, List(Of HHDTO_movdis_row)),
+    ByVal hsPercorso As HashSet(Of String)
+)
+
+        If Not dizFigli.ContainsKey(strUidPadre) Then Return
+
+        For Each oRelazione As HHDTO_movdis_row In dizFigli(strUidPadre)
+
+            Dim strUidFiglio As String = oRelazione.UID_Figlio
+
+            If hsPercorso.Contains(strUidFiglio) Then
+                Throw New Exception(
+                    "Ciclo rilevato durante la costruzione del TreeView: " &
+                    strUidFiglio
+                )
+            End If
+
+            ' Creo il nodo del componente.
+            Dim oNodoFiglio As New TreeNode(
+                CreaTestoNodo(oRelazione.oCodiceFiglio)
+            )
+
+            ' Conservo la relazione associata a questa specifica occorrenza.
+            oNodoFiglio.Tag = oRelazione
+
+            oNodoPadre.Nodes.Add(oNodoFiglio)
+
+            ' Scendo ulteriormente soltanto se non è l'ultimo livello.
+            If Not oRelazione.UltimoLivello Then
+
+                hsPercorso.Add(strUidFiglio)
+
+                AggiungiNodiFigli(
+                    oNodoFiglio,
+                    strUidFiglio,
+                    dizFigli,
+                    hsPercorso
+                )
+
+                hsPercorso.Remove(strUidFiglio)
+
+            End If
+
+        Next
+
+    End Sub
+
+    Public Overridable Function CreaTestoNodo(
+    ByVal oArticolo As HHDTO_articolo) As String
+
+        If oArticolo Is Nothing Then
+            Return "(Articolo non disponibile)"
+        End If
+
+        Return oArticolo.CODE & " - " & oArticolo.DESC1
+
+    End Function
 
 
 #End Region
